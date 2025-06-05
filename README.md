@@ -1,3 +1,4 @@
+
 # WEAR - Sistema de Gestão de Pedidos
 
 Este é um sistema web desenvolvido para gerenciar vendas, produtos, pedidos, pagamentos e entregas de forma integrada. O sistema funciona inteiramente no navegador, utilizando HTML, CSS, JavaScript e localStorage para armazenar dados localmente.
