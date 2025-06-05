@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!-- Define o tipo de documento HTML5 -->
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Garante que a página será exibida corretamente em dispositivos móveis -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestão de Pagamentos - WEAR</title>
+  
+  <!-- Importa o CSS externo -->
+  <link rel="stylesheet" href="estilo.css" />
+
+  <!-- Estilos adicionais específicos desta página -->
+  <style>
+    /* Destaca elementos focados para acessibilidade */
+    :focus {
+      outline: 3px solid #005fcc;
+      outline-offset: 2px;
+    }
+
+    /* Estilos para cores de status */
+    .status-aprovado {
+      color: #007000;
+      font-weight: bold;
+    }
+    .status-pendente {
+      color: #b36b00;
+      font-weight: bold;
+    }
+    .status-recusado {
+      color: #b30000;
+      font-weight: bold;
+    }
+
+    /* Estilo do container principal */
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    /* Estilo da tabela de pagamentos */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* Cabeçalho da tabela */
+    thead th {
+      background-color: #f2f2f2;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    /* Células do corpo da tabela */
+    tbody td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    /* Estilização do seletor de status */
+    select.status-select {
+      font-weight: bold;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    /* Cores conforme o status */
+    select.status-select.aprovado {
+      color: #007000;
+    }
+    select.status-select.pendente {
+      color: #b36b00;
+    }
+    select.status-select.recusado {
+      color: #b30000;
+    }
+
+    /* Texto oculto visualmente, mas acessível a leitores de tela */
+    .visually-hidden {
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabeçalho com menu de navegação -->
+  <header>
+    <div class="header-container">
+      <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+      <nav>
+        <a href="home.html">HOME</a>
+        <a href="venda.html">VENDA</a>
+        <a href="produtos.html">PRODUTOS</a>
+        <a href="pedidos.html">PEDIDOS</a>
+        <a href="pagamento.html" class="active">PAGAMENTOS</a>
+        <a href="entrega.html">ENTREGAS</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal da página -->
+  <main id="conteudo" class="container" role="main">
+    <h1>Gestão de Pagamentos</h1>
+
+    <!-- Filtro de status dos pagamentos -->
+    <div class="filtro" style="margin-bottom: 20px;">
+      <label for="statusFiltro">Filtrar por status:</label>
+      <select id="statusFiltro" name="statusFiltro" onchange="filtrarPagamentos()" aria-label="Filtro de status dos pagamentos">
+        <option value="todos">Todos</option>
+        <option value="aprovado">Aprovado</option>
+        <option value="pendente">Pendente</option>
+        <option value="recusado">Recusado</option>
+      </select>
+    </div>
+
+    <!-- Tabela com os pagamentos -->
+    <table aria-describedby="descricao-tabela">
+      <caption id="descricao-tabela" class="visually-hidden">Tabela com os pagamentos registrados e seus respectivos status.</caption>
+      <thead>
+        <tr>
+          <th scope="col">ID Compra</th>
+          <th scope="col">Data do Pagamento</th>
+          <th scope="col">Forma de Pagamento</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-pagamentos" aria-live="polite"></tbody>
+    </table>
+  </main>
+
+  <!-- Rodapé da página -->
+  <footer role="contentinfo" aria-label="Rodapé da página">
+    <p>© 2025 <strong>WEAR</strong>. Todos os direitos reservados.</p>
+  </footer>
+
+  <!-- Scripts JavaScript -->
+  <script>
+    // Carrega os pedidos do localStorage
+    function carregarPedidos() {
+      return JSON.parse(localStorage.getItem("pedidos")) || [];
+    }
+
+    // Salva os pedidos no localStorage
+    function salvarPedidos(pedidos) {
+      localStorage.setItem("pedidos", JSON.stringify(pedidos));
+    }
+
+    // Converte o valor interno da forma de pagamento para um texto legível
+    function formatarFormaPagamento(valor) {
+      switch(valor) {
+        case "cartao_credito": return "Cartão de Crédito";
+        case "cartao_debito": return "Cartão de Débito";
+        case "boleto": return "Boleto";
+        case "pix": return "Pix";
+        default: return valor;
+      }
+    }
+
+    // Cria o seletor de status para cada linha da tabela
+    function criarSelectStatus(statusAtual, idPedido) {
+      const select = document.createElement("select");
+      select.className = `status-select ${statusAtual.toLowerCase()}`;
+      select.setAttribute("aria-label", `Selecionar novo status para o pagamento de ID ${idPedido}`);
+
+      const opcoes = [
+        { valor: "aprovado", texto: "Aprovado" },
+        { valor: "pendente", texto: "Pendente" },
+        { valor: "recusado", texto: "Recusado" }
+      ];
+
+      // Preenche as opções do select
+      opcoes.forEach(opcao => {
+        const option = document.createElement("option");
+        option.value = opcao.valor;
+        option.textContent = opcao.texto;
+        if (opcao.valor === statusAtual.toLowerCase()) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+
+      // Atualiza o status quando o valor do select for alterado
+      select.addEventListener("change", (e) => {
+        atualizarStatus(idPedido, e.target.value);
+        select.className = `status-select ${e.target.value}`;
+      });
+
+      return select;
+    }
+
+    // Atualiza o status de um pagamento no localStorage
+    function atualizarStatus(idPedido, novoStatus) {
+      const pedidos = carregarPedidos();
+      const index = pedidos.findIndex(p => p.id === idPedido);
+      if (index !== -1) {
+        pedidos[index].status = novoStatus.charAt(0).toUpperCase() + novoStatus.slice(1);
+        salvarPedidos(pedidos);
+      }
+    }
+
+    // Exibe os pagamentos na tabela
+    function renderizarPagamentos(lista) {
+      const tbody = document.getElementById("tabela-pagamentos");
+      tbody.innerHTML = "";
+
+      // Caso não haja pagamentos
+      if (lista.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="4" style="text-align:center; padding: 15px;">Nenhum pagamento encontrado.</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+
+      // Preenche a tabela com os dados
+      lista.forEach(pag => {
+        const tr = document.createElement("tr");
+
+        const tdId = document.createElement("td");
+        tdId.textContent = pag.id;
+
+        const tdData = document.createElement("td");
+        tdData.textContent = pag.data;
+
+        const tdForma = document.createElement("td");
+        tdForma.textContent = formatarFormaPagamento(pag.pagamento);
+
+        const tdStatus = document.createElement("td");
+        const selectStatus = criarSelectStatus(pag.status, pag.id);
+        tdStatus.appendChild(selectStatus);
+
+        tr.appendChild(tdId);
+        tr.appendChild(tdData);
+        tr.appendChild(tdForma);
+        tr.appendChild(tdStatus);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Filtra os pagamentos com base no status selecionado
+    function filtrarPagamentos() {
+      const filtro = document.getElementById("statusFiltro").value;
+      const pedidos = carregarPedidos();
+      let listaFiltrada = pedidos;
+
+      if (filtro !== "todos") {
+        listaFiltrada = pedidos.filter(p => p.status.toLowerCase() === filtro);
+      }
+
+      renderizarPagamentos(listaFiltrada);
+    }
+
+    // Quando a página é carregada, exibe os dados filtrados
+    document.addEventListener("DOMContentLoaded", filtrarPagamentos);
+  </script>
+</body>
+</html>
+
+
+

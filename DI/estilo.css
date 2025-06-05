@@ -1,0 +1,330 @@
+/* ===== ESTILOS GERAIS ===== */ 
+body {
+  font-family: Arial, sans-serif; /* Fonte legível padrão */
+  line-height: 1.6; /* Altura da linha para melhor leitura */
+  background-color: #f9f9f9; /* Cor de fundo clara */
+  color: #222; /* Cor do texto */
+  letter-spacing: 0.5px; /* Espaçamento entre letras */
+  word-spacing: 1px; /* Espaçamento entre palavras */
+  margin: 0;
+  padding: 0 10px; /* Espaçamento horizontal interno */
+
+  /* Layout para manter footer fixo no final */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Destaque de foco para acessibilidade */
+a:focus,
+button:focus,
+select:focus,
+input:focus {
+  outline: 3px solid #005fcc; /* Borda azul em foco */
+  outline-offset: 2px; /* Distância da borda do elemento */
+}
+
+/* ===== CABEÇALHO (HEADER) ===== */
+header {
+  border-bottom: 1px solid #ddd; /* Linha separadora */
+  background-color: white;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column; /* Empilha logo e menu */
+  align-items: center; /* Centraliza horizontalmente */
+  padding: 10px 20px;
+  text-align: center;
+}
+
+.logo {
+  height: 180px;
+  object-fit: contain; /* Ajusta imagem sem distorcer */
+  margin-bottom: -20px;
+  margin-top: -30px;
+}
+
+/* Navegação */
+nav {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 0 0 0;
+}
+
+nav a {
+  text-decoration: none;
+  color: #333;
+  font-size: 20px;
+  letter-spacing: 2px;
+  font-weight: normal;
+  transition: color 0.3s;
+}
+
+nav a.active {
+  color: #5a1f0f; /* Destaca a aba ativa */
+  border-bottom: 2px solid #5a1f0f;
+  font-weight: bold;
+}
+
+nav a:focus,
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.container {
+  max-width: 1000px;
+  margin: 40px auto 60px auto; /* margem inferior maior para espaçar do footer */
+  background: white;
+  padding: 30px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra suave */
+  flex-grow: 1; /* Faz o container crescer para ocupar o espaço vertical disponível */
+}
+
+/* ===== GRUPO DE FORMULÁRIO ===== */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #000;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-bottom: 2px solid #5a2600; /* Apenas borda inferior */
+  background-color: transparent;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+}
+
+/* ===== BOTÕES ===== */
+.btn,
+.btn-cancel {
+  background-color: #5a2600;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-right: 10px;
+  transition: background-color 0.3s;
+}
+
+.btn:hover,
+.btn-cancel:hover {
+  background-color: #431d00;
+}
+
+.btn-cancel {
+  background-color: #ccc;
+  color: #222;
+}
+
+.btn-cancel:hover {
+  background-color: #bbb;
+}
+
+/* Botão de edição */
+.btn-edit {
+  background-color: #2196F3;
+}
+
+.btn-edit:hover {
+  background-color: #0b7dda;
+}
+
+/* Botão de exclusão */
+.btn-delete {
+  background-color: #f44336;
+}
+
+.btn-delete:hover {
+  background-color: #da190b;
+}
+
+/* Agrupamento de botões */
+.btn-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ===== TABELA ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+  font-size: 16px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #f4f4f4;
+  color: #000;
+}
+
+/* Foco em células para acessibilidade */
+td:focus,
+th:focus {
+  outline: 2px solid #005fcc;
+  outline-offset: -2px;
+}
+
+/* ===== FILTRO DE STATUS ===== */
+.filtro {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+select {
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  outline-offset: 2px;
+}
+
+/* ===== RODAPÉ ===== */
+footer {
+  background-color: #f4f4f4;
+  padding: 20px 0;
+  text-align: center;
+  border-top: 1px solid #ddd;
+  font-family: 'Quicksand', sans-serif;
+  color: #555;
+  margin-top: auto; /* empurra o footer para o final da página */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+footer p {
+  margin: 0;
+  font-size: 14px;
+}
+
+footer a {
+  color: #5a2600;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+footer a:hover,
+footer a:focus {
+  text-decoration: underline;
+  outline: none;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Ajusta logo e container em telas médias */
+@media (max-width: 768px) {
+  .logo {
+    height: 100px;
+    margin: -20px 0 -20px 0;
+  }
+
+  nav a {
+    font-size: 18px;
+    gap: 20px;
+  }
+
+  .container {
+    padding: 20px 15px;
+    margin: 20px auto 60px auto;
+  }
+
+  table {
+    font-size: 14px;
+  }
+}
+
+/* Adaptação para telas pequenas (mobile) */
+@media (max-width: 480px) {
+  nav {
+    flex-direction: column; /* Empilha os links */
+    gap: 15px;
+    padding: 0;
+  }
+
+  nav a {
+    font-size: 16px;
+    letter-spacing: 1.2px;
+  }
+
+  .btn-actions {
+    flex-direction: column;
+  }
+
+  .btn,
+  .btn-cancel {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  /* Exibe tabela como blocos */
+  table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100%;
+  }
+
+  thead tr {
+    display: none; /* Esconde cabeçalho */
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  td {
+    border: none;
+    padding: 8px 10px;
+    text-align: right;
+    position: relative;
+    padding-left: 50%;
+    font-size: 14px;
+  }
+
+  td::before {
+    content: attr(data-label); /* Usa atributo data-label como rótulo */
+    position: absolute;
+    left: 15px;
+    width: 45%;
+    padding-left: 15px;
+    font-weight: bold;
+    text-align: left;
+    color: #333;
+  }
+}
+
+
+
+  
+
+

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - WEAR</title>
+  <link rel="stylesheet" href="estilo.css" />
+  <style>
+    /* Define largura fixa para colunas específicas da tabela */
+    th:nth-child(1), td:nth-child(1) { width: 300px; }
+    th:nth-child(2), td:nth-child(2) { width: 110px; }
+    th:nth-child(4), td:nth-child(4) { width: 400px; }
+
+    /* Acessibilidade: destaca o foco em botões para navegação por teclado */
+    .btn:focus, .btn-edit:focus, .btn-delete:focus {
+      outline: 3px solid #000;
+      outline-offset: 2px;
+    }
+
+    /* Estilo para leitores de tela - elementos escondidos visualmente mas acessíveis */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+    <!-- Cabeçalho com logo e menu de navegação -->
+    <header>
+        <div class="header-container">
+            <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+            <nav>
+                <a href="home.html">HOME</a>
+                <a href="venda.html">VENDA</a>
+                <a href="produtos.html" class="active">PRODUTOS</a> <!-- Página atual destacada -->
+                <a href="pedidos.html">PEDIDOS</a>
+                <a href="pagamento.html">PAGAMENTOS</a>
+                <a href="entrega.html">ENTREGAS</a>
+            </nav>
+        </div>
+    </header>
+
+  <!-- Conteúdo principal da página -->
+  <main role="main" id="conteudo" tabindex="-1">
+    <div class="container">
+      <h1 id="tituloPrincipal">Gestão de Produtos</h1>
+
+      <!-- Formulário para cadastro/edição de produtos -->
+      <form aria-labelledby="tituloPrincipal">
+        <div class="form-group">
+          <label for="nomeProduto">Nome do Produto:</label>
+          <input type="text" id="nomeProduto" name="nomeProduto" required aria-required="true" />
+        </div>
+
+        <div class="form-group">
+          <label for="precoProduto">Preço:</label>
+          <input type="number" id="precoProduto" name="precoProduto" step="0.01" min="0" required aria-required="true" />
+        </div>
+
+        <div class="form-group">
+          <label for="estoqueProduto">Estoque:</label>
+          <input type="number" id="estoqueProduto" name="estoqueProduto" min="0" required aria-required="true" />
+        </div>
+
+        <div class="form-group">
+          <label for="descricaoProduto">Descrição:</label>
+          <input type="text" id="descricaoProduto" name="descricaoProduto" maxlength="200" required aria-required="true" />
+        </div>
+
+        <!-- Botões para salvar o produto e cancelar edição -->
+        <button class="btn" type="button" onclick="adicionarProduto()" aria-label="Salvar Produto">Salvar Produto</button>
+        <button class="btn-cancel" id="btnCancelar" type="button" onclick="cancelarEdicao()" style="display:none;">Cancelar Edição</button>
+      </form>
+
+      <!-- Tabela que lista todos os produtos cadastrados -->
+      <h2 id="tituloTabela">Lista de Produtos</h2>
+      <table aria-labelledby="tituloTabela" role="table">
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">Preço</th>
+            <th scope="col">Estoque</th>
+            <th scope="col">Descrição</th>
+            <th scope="col">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaProdutos" aria-live="polite"></tbody> <!-- Conteúdo gerado dinamicamente -->
+      </table>
+    </div>
+  </main>
+
+  <script>
+    // Array para armazenar os produtos carregados/salvos
+    let produtos = [];
+    // Índice do produto que está sendo editado, ou null se for novo cadastro
+    let editIndex = null;
+
+    // Carrega os produtos do localStorage para o array produtos
+    function carregarProdutos() {
+      const dadosSalvos = localStorage.getItem("produtos");
+      if (dadosSalvos) {
+        produtos = JSON.parse(dadosSalvos);
+      }
+    }
+
+    // Salva o array produtos no localStorage como JSON
+    function salvarProdutos() {
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+    }
+
+    // Atualiza a tabela exibindo os produtos atuais do array
+    function renderTabela() {
+      const tbody = document.getElementById("tabelaProdutos");
+      tbody.innerHTML = ""; // Limpa tabela antes de preencher
+
+      produtos.forEach((produto, index) => {
+        const linha = document.createElement("tr");
+
+        // Monta o conteúdo da linha com dados e botões de ação
+        linha.innerHTML = `
+          <td>${produto.nome}</td>
+          <td>R$ ${produto.preco.toFixed(2)}</td>
+          <td>${produto.estoque}</td>
+          <td>${produto.descricao}</td>
+          <td>
+            <div class="btn-actions">
+              <!-- Botão para editar produto -->
+              <button class="btn btn-edit" type="button" onclick="editarProduto(${index})" aria-label="Editar ${produto.nome}">Editar</button>
+              <!-- Botão para excluir produto -->
+              <button class="btn btn-delete" type="button" onclick="excluirProduto(${index})" aria-label="Excluir ${produto.nome}">Excluir</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(linha);
+      });
+    }
+
+    // Função chamada para adicionar um novo produto ou salvar edição
+    function adicionarProduto() {
+      // Pega os valores dos campos do formulário
+      const nome = document.getElementById("nomeProduto").value.trim();
+      const preco = parseFloat(document.getElementById("precoProduto").value);
+      const estoque = parseInt(document.getElementById("estoqueProduto").value);
+      const descricao = document.getElementById("descricaoProduto").value.trim();
+
+      // Validação simples para evitar campos vazios ou inválidos
+      if (!nome || isNaN(preco) || isNaN(estoque) || !descricao) {
+        alert("Preencha todos os campos corretamente.");
+        return;
+      }
+
+      // Cria objeto produto com os dados do formulário
+      const novoProduto = { nome, preco, estoque, descricao };
+
+      if (editIndex === null) {
+        // Se não está editando, adiciona produto novo ao array
+        produtos.push(novoProduto);
+      } else {
+        // Se está editando, substitui o produto existente no índice editIndex
+        produtos[editIndex] = novoProduto;
+        editIndex = null;
+        // Esconde botão de cancelar edição
+        document.getElementById("btnCancelar").style.display = "none";
+      }
+
+      salvarProdutos();    // Salva alterações no localStorage
+      limparFormulario();  // Limpa os campos do formulário
+      renderTabela();      // Atualiza a tabela para refletir mudanças
+    }
+
+    // Preenche o formulário com os dados do produto para edição
+    function editarProduto(index) {
+      const produto = produtos[index];
+      document.getElementById("nomeProduto").value = produto.nome;
+      document.getElementById("precoProduto").value = produto.preco;
+      document.getElementById("estoqueProduto").value = produto.estoque;
+      document.getElementById("descricaoProduto").value = produto.descricao;
+
+      editIndex = index; // Marca o índice do produto que está sendo editado
+      // Exibe o botão de cancelar edição
+      document.getElementById("btnCancelar").style.display = "inline-block";
+    }
+
+    // Remove um produto do array após confirmação do usuário
+    function excluirProduto(index) {
+      if (confirm("Tem certeza que deseja excluir este produto?")) {
+        produtos.splice(index, 1); // Remove produto do array
+        salvarProdutos();          // Salva as alterações
+        renderTabela();            // Atualiza a tabela
+        cancelarEdicao();          // Cancela qualquer edição em andamento
+      }
+    }
+
+    // Cancela a edição, limpa o formulário e esconde botão de cancelar
+    function cancelarEdicao() {
+      editIndex = null;
+      limparFormulario();
+      document.getElementById("btnCancelar").style.display = "none";
+    }
+
+    // Limpa os campos do formulário para inserir novos dados
+    function limparFormulario() {
+      document.getElementById("nomeProduto").value = "";
+      document.getElementById("precoProduto").value = "";
+      document.getElementById("estoqueProduto").value = "";
+      document.getElementById("descricaoProduto").value = "";
+    }
+
+    // Inicializa a página carregando produtos salvos e exibindo na tabela
+    carregarProdutos();
+    renderTabela();
+  </script>
+
+  <!-- Rodapé com direitos autorais -->
+  <footer role="contentinfo" aria-label="Rodapé da página">
+    <p>© 2025 <strong>WEAR</strong>. Todos os direitos reservados.</p>
+  </footer>
+
+</body>
+</html>
+

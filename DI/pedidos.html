@@ -1,0 +1,331 @@
+<!DOCTYPE html> 
+<html lang="pt-br">
+<head>
+  <!-- Configurações básicas da página -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestão de Pedidos - WEAR</title>
+
+  <!-- Estilo externo e fonte -->
+  <link rel="stylesheet" href="estilo.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Estilos CSS internos -->
+  <style>
+    /* Links e foco acessível */
+    a { color: #003366; }
+    a:focus, button:focus, select:focus {
+      outline: 2px solid #005fcc;
+      outline-offset: 2px;
+    }
+
+    /* Layout geral */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Tabela de pedidos */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: 600;
+    }
+
+    caption {
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    /* Seletores, botões e ações */
+    select {
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 5px;
+    }
+
+    main.container {
+      margin-top: 40px;
+    }
+
+    /* Define largura específica para colunas */
+    th:nth-child(3), td:nth-child(3) { width: 100px; }
+
+    /* Estilo do modal de detalhes */
+    #detalhes-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #detalhes-modal {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    #detalhes-modal h2 {
+      margin-top: 0;
+    }
+
+    #detalhes-modal ul {
+      padding-left: 20px;
+    }
+
+    #detalhes-modal button {
+      display: block;
+      margin: 20px auto 0; /* 20px acima, auto nas laterais, 0 abaixo */
+      padding: 8px 16px;
+      background-color: #5a1f0f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* Botões gerais */
+    .btn {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-delete {
+      background-color: #c62828;
+      color: white;
+    }
+
+    .btn-visualizar {
+      color: white;
+    }
+
+    main.container {
+      margin-top: 40px;
+      margin-bottom: 120px; /* espaço maior abaixo do conteúdo */
+    }
+  
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho com navegação -->
+  <header>
+    <div class="header-container">
+      <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+      <nav>
+        <a href="home.html">HOME</a>
+        <a href="venda.html">VENDA</a>
+        <a href="produtos.html">PRODUTOS</a>
+        <a href="pedidos.html" class="active">PEDIDOS</a>
+        <a href="pagamento.html">PAGAMENTOS</a>
+        <a href="entrega.html">ENTREGAS</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal da página -->
+  <main class="container" role="main">
+    <h1 id="titulo-pagina">Pedidos</h1>
+    <table id="tabela-pedidos" aria-describedby="titulo-pagina">
+      <caption>Lista de pedidos registrados</caption>
+      <thead>
+        <tr>
+          <!-- Cabeçalhos da tabela -->
+          <th>ID</th>
+          <th>Cliente</th>
+          <th>Data</th>
+          <th>Pagamento</th>
+          <th>Status</th>
+          <th>Entrega</th>
+          <th>Transportadora</th>
+          <th>Código de Rastreamento</th>
+          <th>Total de Itens</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody> <!-- Conteúdo da tabela será preenchido via JS -->
+    </table>
+  </main>
+
+  <!-- Modal que exibe detalhes do pedido -->
+  <div id="detalhes-overlay">
+    <div id="detalhes-modal">
+      <h2>Detalhes do Pedido <span id="detalhes-id"></span></h2>
+      <ul id="detalhes-itens"></ul>
+      <button id="fechar-detalhes">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Script JavaScript para lógica da página -->
+  <script>
+    const tabelaBody = document.querySelector("#tabela-pedidos tbody");
+
+    // Carrega os pedidos armazenados no localStorage
+    function carregarPedidos() {
+      return JSON.parse(localStorage.getItem("pedidos")) || [];
+    }
+
+    // Atualiza a tabela de pedidos com os dados carregados
+    function atualizarTabela(pedidos) {
+      tabelaBody.innerHTML = "";
+
+      if (pedidos.length === 0) {
+        const row = tabelaBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 10;
+        cell.textContent = "Nenhum pedido registrado.";
+        return;
+      }
+
+      // Itera sobre os pedidos e cria linhas na tabela
+      pedidos.forEach(pedido => {
+        const row = tabelaBody.insertRow();
+
+        row.insertCell(0).textContent = pedido.id;
+        row.insertCell(1).textContent = pedido.cliente;
+        row.insertCell(2).textContent = pedido.data;
+        row.insertCell(3).textContent = formatarPagamento(pedido.pagamento);
+
+        // Campo de status com select editável
+        const statusCell = row.insertCell(4);
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", `Alterar status do pedido ${pedido.id}`);
+        ["Pendente", "Em Andamento", "Concluído"].forEach(status => {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = status;
+          if (pedido.status === status) option.selected = true;
+          select.appendChild(option);
+        });
+        select.addEventListener("change", () => {
+          pedido.status = select.value;
+          localStorage.setItem("pedidos", JSON.stringify(pedidos));
+        });
+        statusCell.appendChild(select);
+
+        // Campos de entrega
+        row.insertCell(5).textContent = pedido.entrega ? "Sim" : "Não";
+        row.insertCell(6).textContent = pedido.entrega ? pedido.transportadora : "-";
+        row.insertCell(7).textContent = pedido.entrega ? pedido.codigoRastreamento : "-";
+
+        // Total de itens no pedido
+        const totalItens = pedido.itens.reduce((soma, item) => soma + item.quantidade, 0);
+        row.insertCell(8).textContent = totalItens;
+
+        // Botões de ação: visualizar e excluir
+        const cellAcoes = row.insertCell(9);
+        const divBtnGroup = document.createElement("div");
+        divBtnGroup.className = "btn-group";
+
+        const btnVisualizar = document.createElement("button");
+        btnVisualizar.className = "btn btn-visualizar";
+        btnVisualizar.textContent = "Visualizar";
+        btnVisualizar.setAttribute("aria-label", `Visualizar pedido ${pedido.id}`);
+
+        const btnExcluir = document.createElement("button");
+        btnExcluir.className = "btn btn-delete";
+        btnExcluir.textContent = "Excluir";
+        btnExcluir.setAttribute("aria-label", `Excluir pedido ${pedido.id}`);
+        btnExcluir.onclick = () => {
+          if (confirm(`Deseja excluir o pedido ${pedido.id}?`)) {
+            const index = pedidos.findIndex(p => p.id === pedido.id);
+            pedidos.splice(index, 1);
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            atualizarTabela(pedidos);
+          }
+        };
+
+        // Exibe o modal com os detalhes do pedido
+        btnVisualizar.onclick = () => {
+          spanId.textContent = pedido.id;
+          ulItens.innerHTML = "";
+          let total = 0;
+
+          pedido.itens.forEach(item => {
+            const li = document.createElement("li");
+            const preco = item.precoUnitario || 0;
+            const subtotal = preco * item.quantidade;
+            total += subtotal;
+            li.textContent = `Produto: ${item.nome} – Quantidade: ${item.quantidade} – Preço: R$ ${preco.toFixed(2)}`;
+            ulItens.appendChild(li);
+          });
+
+          const liTotal = document.createElement("li");
+          liTotal.style.fontWeight = "bold";
+          liTotal.style.marginTop = "10px";
+          liTotal.textContent = `Total do pedido: R$ ${total.toFixed(2)}`;
+          ulItens.appendChild(liTotal);
+
+          overlay.style.display = "flex";
+        };
+
+        divBtnGroup.appendChild(btnVisualizar);
+        divBtnGroup.appendChild(btnExcluir);
+        cellAcoes.appendChild(divBtnGroup);
+      });
+    }
+
+    // Formata o tipo de pagamento
+    function formatarPagamento(pagamento) {
+      switch (pagamento) {
+        case "cartao_credito": return "Cartão de Crédito";
+        case "cartao_debito": return "Cartão de Débito";
+        case "boleto": return "Boleto";
+        case "pix": return "Pix";
+        default: return pagamento;
+      }
+    }
+
+    // Ao carregar a página, exibe a tabela
+    window.addEventListener("load", () => {
+      const pedidos = carregarPedidos();
+      atualizarTabela(pedidos);
+    });
+
+    // Controle do modal de detalhes
+    const overlay = document.getElementById("detalhes-overlay");
+    const spanId = document.getElementById("detalhes-id");
+    const ulItens = document.getElementById("detalhes-itens");
+    const fecharBtn = document.getElementById("fechar-detalhes");
+
+    fecharBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+    });
+  </script>
+
+  <!-- Rodapé -->
+  <footer role="contentinfo" aria-label="Rodapé da página">
+    <p>© 2025 <strong>WEAR</strong>. Todos os direitos reservados.</p>
+  </footer>
+
+</body>
+</html>
+
+

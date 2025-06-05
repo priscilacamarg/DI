@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestão de Entregas - WEAR</title>
+  <link rel="stylesheet" href="estilo.css" />
+
+  <!-- Estilo para agrupar botões -->
+  <style>
+    .btn-group {
+      display: flex;
+      gap: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho com logo e menu de navegação -->
+  <header>
+    <div class="header-container">
+      <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+      <nav>
+        <!-- Navegação entre páginas -->
+        <a href="home.html">HOME</a>
+        <a href="venda.html">VENDA</a>
+        <a href="produtos.html">PRODUTOS</a>
+        <a href="pedidos.html">PEDIDOS</a>
+        <a href="pagamento.html">PAGAMENTOS</a>
+        <a href="entrega.html" class="active">ENTREGAS</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo principal -->
+  <div class="container">
+    <h1>Gestão de Entregas</h1>
+
+    <!-- Filtro de status de entrega -->
+    <div class="filtro">
+      <label for="statusFiltroEntrega">Filtrar por status: </label>
+      <select id="statusFiltroEntrega" onchange="filtrarEntregas()">
+        <option value="todos">Todos</option>
+        <option value="Postado">Postado</option>
+        <option value="Em trânsito">Em trânsito</option>
+        <option value="Saiu para entrega">Saiu para entrega</option>
+        <option value="Entregue">Entregue</option>
+      </select>
+    </div>
+
+    <!-- Tabela que exibirá as entregas -->
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Código de Rastreio</th>
+          <th>Transportadora</th>
+          <th>Prazo de Entrega</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-entregas"></tbody> <!-- Corpo da tabela preenchido via JavaScript -->
+    </table>
+
+    <!-- Área onde a etiqueta será exibida -->
+    <div id="etiqueta" class="etiqueta" style="display: none;"></div>
+  </div>
+
+  <script>
+    // Referências dos elementos HTML
+    const tabela = document.getElementById('tabela-entregas');
+    const etiqueta = document.getElementById('etiqueta');
+
+    // Função que carrega os pedidos com dados de entrega salvos no localStorage
+    function carregarEntregas() {
+      const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+
+      // Filtra os pedidos que possuem dados completos de entrega
+      return pedidos
+        .filter(p => p.entrega && p.transportadora && p.codigoRastreamento)
+        .map(p => {
+          // Formata o prazo de entrega
+          const prazo = p.prazoEntrega;
+          let prazoFormatado = "Prazo não informado";
+          if (prazo) {
+            const numero = parseInt(prazo);
+            prazoFormatado = `${numero} ${numero === 1 ? 'dia útil' : 'dias úteis'}`;
+          }
+          return {
+            id: p.id,
+            rastreio: p.codigoRastreamento,
+            transportadora: p.transportadora,
+            prazo: prazoFormatado,
+            status: p.statusEntrega || "Postado" // Status padrão se não estiver definido
+          };
+        });
+    }
+
+    // Função que monta e exibe a tabela de entregas, aplicando filtro de status se necessário
+    function carregarTabelaEntregas(filtro = "todos") {
+      const entregas = carregarEntregas();
+
+      // Aplica o filtro selecionado (ou exibe todas se "todos")
+      const entregasFiltradas = filtro === "todos" ? entregas : entregas.filter(e => e.status === filtro);
+
+      // Limpa a tabela antes de preencher novamente
+      tabela.innerHTML = '';
+
+      // Se não houver entregas para exibir, mostra uma mensagem
+      if (entregasFiltradas.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td colspan="6" style="text-align: center; padding: 10px;">Nenhuma entrega encontrada</td>
+        `;
+        tabela.appendChild(tr);
+        return;
+      }
+
+      // Cria uma linha na tabela para cada entrega
+      entregasFiltradas.forEach(entrega => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${entrega.id}</td>
+          <td>${entrega.rastreio}</td>
+          <td>${entrega.transportadora}</td>
+          <td>${entrega.prazo}</td>
+          <td>
+            <!-- Menu para alterar status da entrega -->
+            <select onchange="atualizarStatusEntrega('${entrega.id}', this.value)">
+              <option value="Postado" ${entrega.status === 'Postado' ? 'selected' : ''}>Postado</option>
+              <option value="Em trânsito" ${entrega.status === 'Em trânsito' ? 'selected' : ''}>Em trânsito</option>
+              <option value="Saiu para entrega" ${entrega.status === 'Saiu para entrega' ? 'selected' : ''}>Saiu para entrega</option>
+              <option value="Entregue" ${entrega.status === 'Entregue' ? 'selected' : ''}>Entregue</option>
+            </select>
+          </td>
+          <td>
+            <!-- Botão para gerar etiqueta de envio -->
+            <div class="btn-group">
+              <button class="btn" onclick="gerarEtiqueta('${entrega.id}', '${entrega.rastreio}', '${entrega.transportadora}')">Etiqueta</button>
+            </div>
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+
+    // Atualiza o status da entrega no localStorage
+    function atualizarStatusEntrega(idPedido, novoStatus) {
+      const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+      const pedido = pedidos.find(p => p.id === idPedido);
+      if (pedido) {
+        pedido.statusEntrega = novoStatus;
+        localStorage.setItem('pedidos', JSON.stringify(pedidos)); // Salva alteração
+      }
+    }
+
+    // Exibe a etiqueta de envio com os dados da entrega
+    function gerarEtiqueta(id, rastreio, transportadora) {
+      etiqueta.style.display = 'block';
+      etiqueta.innerHTML = `
+        <strong>Etiqueta de Envio</strong><br><br>
+        Pedido: <strong>${id}</strong><br>
+        Código de Rastreio: <strong>${rastreio}</strong><br>
+        Transportadora: <strong>${transportadora}</strong><br>
+        Data: ${new Date().toLocaleDateString()}
+      `;
+    }
+
+    // Aplica o filtro de status conforme o valor selecionado
+    function filtrarEntregas() {
+      const filtro = document.getElementById('statusFiltroEntrega').value;
+      carregarTabelaEntregas(filtro);
+    }
+
+    // Executa ao carregar a página
+    window.onload = () => {
+      carregarTabelaEntregas(); // Exibe todas as entregas inicialmente
+    };
+  </script>
+
+  <!-- Rodapé (você pode colocar informações aqui futuramente) -->
+  <footer>
+    <img src="" alt="">
+  </footer>
+
+</body>
+</html>
+
+
+

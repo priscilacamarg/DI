@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registrar Pedido - WEAR</title>
+  <link rel="stylesheet" href="estilo.css" />
+
+  <style>
+    /* Estilos focados em acessibilidade e formatação de formulário */
+    a { 
+      color: #005ea2; 
+    }
+    a:focus, button:focus, input:focus, select:focus {
+      outline: 3px solid #005ea2;
+      outline-offset: 2px;
+    }
+    .form-container {
+      max-width: 600px; 
+      margin: 30px auto; 
+      background: #fff; 
+      padding: 20px;
+      border: 1px solid #ccc; 
+      border-radius: 6px;
+    }
+    .form-container h2 { 
+      margin-bottom: 20px; 
+    }
+    label { 
+      font-weight: bold; 
+    }
+    .form-container label { 
+      display: block; 
+      margin-top: 10px; 
+    }
+    .form-container select, 
+    .form-container input[type="text"],
+    .form-container input[type="date"], 
+    .form-container input[type="number"] {
+      width: 100%;
+      padding: 8px; 
+      margin-top: 5px; 
+      border: 1px solid #ccc;
+      border-radius: 4px; 
+      box-sizing: border-box;
+    }
+    .item-row {
+      display: flex; gap: 10px; 
+      margin-top: 10px; 
+      align-items: center;
+    }
+    .item-row select, 
+    .item-row input { 
+      flex: 1;
+     }
+    .btn {
+      margin-top: 15px; 
+      color: white;
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 4px; 
+      cursor: pointer;
+    }
+    .btn:hover { 
+      background-color: #555; 
+    }
+    .btn-delete-item {
+      background: transparent; 
+      border: none; 
+      color: #900;
+      font-size: 1.3rem; 
+      cursor: pointer; 
+      padding: 0 6px; 
+      line-height: 1;
+    }
+    .btn-delete-item:hover { 
+      color: #f00; 
+    }
+    #entregaCampos { 
+      display: none; 
+    }
+    .entrega-row {
+      display: flex; 
+      align-items: center; 
+      gap: 20px; 
+      margin-top: 10px;
+    }
+    .entrega-row label {
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      margin: 0;
+      cursor: pointer; 
+      font-size: 1rem;
+    }
+    .entrega-row input[type="radio"] { 
+      margin: 0;
+     }
+  </style>
+</head>
+
+<body>
+  <!-- Cabeçalho com navegação -->
+  <header>
+    <div class="header-container">
+      <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+      <nav>
+        <a href="home.html">HOME</a>
+        <a href="venda.html" class="active">VENDA</a>
+        <a href="produtos.html">PRODUTOS</a>
+        <a href="pedidos.html">PEDIDOS</a>
+        <a href="pagamento.html">PAGAMENTOS</a>
+        <a href="entrega.html">ENTREGAS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main role="main">
+    <div class="form-container">
+      <h2 id="tituloForm">Registrar Novo Pedido</h2>
+      <!-- Formulário de pedido -->
+      <form id="pedidoForm" aria-labelledby="tituloForm">
+        <!-- Campo cliente -->
+        <label for="cliente">Nome do Cliente:</label>
+        <input type="text" id="cliente" name="cliente" required />
+
+        <!-- Campo data -->
+        <label for="data">Data:</label>
+        <input type="date" id="data" name="data" required />
+
+        <!-- Itens do pedido -->
+        <fieldset aria-labelledby="itensLabel">
+          <legend id="itensLabel">Itens do Pedido:</legend>
+          <div id="itensContainer"></div>
+          <button type="button" class="btn" onclick="adicionarItem()">+ Adicionar Item</button>
+        </fieldset>
+
+        <!-- Seleção da forma de pagamento -->
+        <label for="pagamento">Forma de Pagamento:</label>
+        <select id="pagamento" name="pagamento" required>
+          <option value="">Selecione</option>
+          <option value="cartao_credito">Cartão de Crédito</option>
+          <option value="cartao_debito">Cartão de Débito</option>
+          <option value="boleto">Boleto</option>
+          <option value="pix">Pix</option>
+        </select>
+
+        <!-- Opção de entrega -->
+        <fieldset class="entrega-row">
+          <legend>Entrega?</legend>
+          <label for="entregaSim">
+            <input type="radio" name="entrega" value="sim" id="entregaSim" /> Sim
+          </label>
+          <label for="entregaNao">
+            <input type="radio" name="entrega" value="nao" id="entregaNao" checked /> Não
+          </label>
+        </fieldset>
+
+        <!-- Campos visíveis apenas se entrega for marcada -->
+        <div id="entregaCampos" aria-hidden="true">
+          <label for="transportadora">Transportadora:</label>
+          <input type="text" id="transportadora" name="transportadora" />
+
+          <label for="codigoRastreamento">Código de Rastreamento:</label>
+          <input type="text" id="codigoRastreamento" name="codigoRastreamento" />
+
+          <label for="prazoEntrega">Prazo de Entrega (dias):</label>
+          <input type="number" id="prazoEntrega" name="prazoEntrega" min="1" />
+        </div>
+
+        <button type="submit" class="btn">Salvar Pedido</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // Carrega os produtos do localStorage
+    function carregarProdutos() {
+      const produtos = JSON.parse(localStorage.getItem("produtos"));
+      return produtos || [];
+    }
+
+    // Cria o elemento <select> com as opções de produtos
+    function criarSelectProdutos(produtos) {
+      const select = document.createElement("select");
+      select.className = "item-produto";
+      select.required = true;
+      const optionDefault = document.createElement("option");
+      optionDefault.value = "";
+      optionDefault.textContent = "Selecione um produto";
+      select.appendChild(optionDefault);
+
+      produtos.forEach((produto) => {
+        const option = document.createElement("option");
+        option.value = produto.nome;
+        option.textContent = `${produto.nome} - R$ ${produto.preco.toFixed(2)}`;
+        select.appendChild(option);
+      });
+      return select;
+    }
+
+    // Adiciona um novo item ao pedido
+    function adicionarItem() {
+      const produtos = carregarProdutos();
+      if (produtos.length === 0) {
+        alert("Nenhum produto cadastrado.");
+        return;
+      }
+      const container = document.getElementById("itensContainer");
+      const divItem = document.createElement("div");
+      divItem.className = "item-row";
+
+      const selectProdutos = criarSelectProdutos(produtos);
+
+      const inputQuantidade = document.createElement("input");
+      inputQuantidade.type = "number";
+      inputQuantidade.min = "1";
+      inputQuantidade.placeholder = "Quantidade";
+      inputQuantidade.className = "item-quantidade";
+      inputQuantidade.required = true;
+
+      const btnExcluir = document.createElement("button");
+      btnExcluir.type = "button";
+      btnExcluir.className = "btn-delete-item";
+      btnExcluir.textContent = "X";
+      btnExcluir.onclick = () => divItem.remove();
+
+      divItem.append(selectProdutos, inputQuantidade, btnExcluir);
+      container.appendChild(divItem);
+    }
+
+    // Gera o próximo ID sequencial para o pedido
+    function obterProximoId(pedidos) {
+      if (pedidos.length === 0) return "001";
+      const idsNumericos = pedidos.map(p => parseInt(p.id));
+      const proximo = Math.max(...idsNumericos) + 1;
+      return proximo.toString().padStart(3, "0");
+    }
+
+    // Alterna a exibição dos campos de entrega
+    document.getElementById("entregaSim").addEventListener("change", () => {
+      document.getElementById("entregaCampos").style.display = "block";
+    });
+    document.getElementById("entregaNao").addEventListener("change", () => {
+      document.getElementById("entregaCampos").style.display = "none";
+    });
+
+    // Adiciona o primeiro item ao carregar a página
+    window.onload = () => adicionarItem();
+
+    // Manipula o envio do formulário
+    document.getElementById("pedidoForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const cliente = document.getElementById("cliente").value.trim();
+      const data = document.getElementById("data").value;
+      const formaPagamento = document.getElementById("pagamento").value;
+      const entregaMarcada = document.getElementById("entregaSim").checked;
+
+      const transportadora = document.getElementById("transportadora").value.trim();
+      const codigoRastreamento = document.getElementById("codigoRastreamento").value.trim();
+      const prazoEntrega = document.getElementById("prazoEntrega").value;
+
+      const selectsProdutos = document.querySelectorAll(".item-produto");
+      const inputsQuantidade = document.querySelectorAll(".item-quantidade");
+
+      const produtosSalvos = JSON.parse(localStorage.getItem("produtos")) || [];
+      const itens = [];
+      let valorTotal = 0;
+
+      // Valida e coleta itens
+      for (let i = 0; i < selectsProdutos.length; i++) {
+        const produtoSelecionado = selectsProdutos[i].value;
+        const quantidade = parseInt(inputsQuantidade[i].value);
+        if (!produtoSelecionado || isNaN(quantidade) || quantidade < 1) {
+          alert("Preencha todos os itens corretamente.");
+          return;
+        }
+
+        const produto = produtosSalvos.find(p => p.nome === produtoSelecionado);
+        const precoUnitario = produto ? produto.preco : 0;
+        const subtotal = precoUnitario * quantidade;
+        valorTotal += subtotal;
+
+        itens.push({ nome: produtoSelecionado, quantidade, precoUnitario, subtotal });
+      }
+
+      // Valida dados obrigatórios
+      if (!cliente || !data || !formaPagamento) {
+        alert("Preencha todos os campos obrigatórios.");
+        return;
+      }
+
+      // Valida dados de entrega, se necessário
+      if (entregaMarcada && (!transportadora || !codigoRastreamento || !prazoEntrega)) {
+        alert("Preencha todos os dados de entrega.");
+        return;
+      }
+
+      const pedidosSalvos = JSON.parse(localStorage.getItem("pedidos")) || [];
+      const novoId = obterProximoId(pedidosSalvos);
+
+      // Cria o objeto do novo pedido
+      const novoPedido = {
+        id: novoId,
+        cliente,
+        data,
+        pagamento: formaPagamento,
+        entrega: entregaMarcada,
+        transportadora: entregaMarcada ? transportadora : "",
+        codigoRastreamento: entregaMarcada ? codigoRastreamento : "",
+        prazoEntrega: entregaMarcada ? prazoEntrega : "",
+        itens,
+        valorTotal: valorTotal.toFixed(2)
+      };
+
+      pedidosSalvos.push(novoPedido);
+      localStorage.setItem("pedidos", JSON.stringify(pedidosSalvos));
+
+      alert("Pedido registrado com sucesso!");
+      window.location.href = "pedidos.html";
+    });
+  </script>
+</body>
+</html>
+

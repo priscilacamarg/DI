@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home - WEAR</title>
+  <link rel="stylesheet" href="estilo.css" />
+  <style>
+    /* Estilo de acessibilidade para foco de teclado */
+    :focus {
+      outline: 3px solid #005fcc;
+      outline-offset: 2px;
+    }
+
+    /* Classe para esconder elementos visualmente, mas manter acessível para leitores de tela */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      border: 0;
+      padding: 0;
+      clip: rect(0 0 0 0);
+      overflow: hidden;
+    }
+
+    /* Estilo geral das seções */
+    .section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Layout flexível para os cards */
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    /* Estilo de cada card */
+    .card {
+      flex: 1;
+      min-width: 200px;
+      background-color: #f4f4f4;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Estilo do título e texto do card */
+    .card h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .card p {
+      font-size: 16px;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #5a2600;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: #5a2600;
+    }
+
+    /* Estilo da tabela */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    table th, table td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ccc;
+    }
+
+    table tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Link de pular para conteúdo principal (acessibilidade) -->
+<a href="#main-content" class="visually-hidden focusable">Pular para o conteúdo principal</a>
+
+<!-- Cabeçalho com logo e menu de navegação -->
+<header>
+  <div class="header-container">
+    <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
+    <nav>
+      <a href="home.html" class="active">HOME</a>
+      <a href="venda.html">VENDA</a>
+      <a href="produtos.html">PRODUTOS</a>
+      <a href="pedidos.html">PEDIDOS</a>
+      <a href="pagamento.html">PAGAMENTOS</a>
+      <a href="entrega.html">ENTREGAS</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Conteúdo principal da página -->
+<main id="main-content" role="main">
+  <div class="container">
+    <h1>Visão Geral</h1>
+
+    <!-- Seção de vendas com cards por período -->
+    <section class="section">
+      <h2>Vendas</h2>
+      <div class="stats" id="visao-geral"></div>
+    </section>
+
+    <!-- Seção de entregas -->
+    <section class="section">
+      <h2>Entregas</h2>
+      <div class="stats" id="visao-entregas"></div>
+    </section>
+
+    <!-- Seção de pagamentos -->
+    <section class="section">
+      <h2>Pagamentos</h2>
+      <div class="stats" id="visao-pagamentos"></div>
+    </section>
+
+    <!-- Tabela com produtos mais vendidos -->
+    <section class="section">
+      <h2>Produtos Mais Vendidos</h2>
+      <table id="mais-vendidos">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Quantidade Vendida</th>
+            <th>Estoque Atual</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+</main>
+
+<script>
+  // Recupera os dados de pedidos e produtos do localStorage
+  const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+  const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+
+  // Formata valor em Real (BRL)
+  function formatarValor(valor) {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    }).format(valor);
+  }
+
+  // Calcula as vendas separadas por período (dia, semana, mês, ano)
+  function calcularVendasPorPeriodo(pedidos) {
+    const hoje = new Date();
+    const vendas = {
+      dia: { qtd: 0, valor: 0 },
+      semana: { qtd: 0, valor: 0 },
+      mes: { qtd: 0, valor: 0 },
+      ano: { qtd: 0, valor: 0 }
+    };
+
+    pedidos.forEach(pedido => {
+      const dataPedido = new Date(pedido.data);
+      const diffDias = Math.floor((hoje - dataPedido) / (1000 * 60 * 60 * 24));
+      const valorPedido = pedido.valorTotal || 0;
+
+      if (diffDias === 0) {
+        vendas.dia.qtd++;
+        vendas.dia.valor += valorPedido;
+      }
+      if (diffDias <= 7) {
+        vendas.semana.qtd++;
+        vendas.semana.valor += valorPedido;
+      }
+      if (dataPedido.getMonth() === hoje.getMonth() && dataPedido.getFullYear() === hoje.getFullYear()) {
+        vendas.mes.qtd++;
+        vendas.mes.valor += valorPedido;
+      }
+      if (dataPedido.getFullYear() === hoje.getFullYear()) {
+        vendas.ano.qtd++;
+        vendas.ano.valor += valorPedido;
+      }
+    });
+
+    return vendas;
+  }
+
+  // Exibe os cards de vendas
+  const vendas = calcularVendasPorPeriodo(pedidos);
+  const visao = document.getElementById("visao-geral");
+  ['dia','semana','mes','ano'].forEach(periodo => {
+    const nomes = { dia: 'Dia', semana: 'Semana', mes: 'Mês', ano: 'Ano' };
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h3>Vendas do ${nomes[periodo]}</h3>
+      <p>Quantidade: <span class="highlight">${vendas[periodo].qtd}</span></p>
+      <p>Valor: <span class="highlight">${formatarValor(vendas[periodo].valor)}</span></p>
+    `;
+    visao.appendChild(card);
+  });
+
+  // Processa os dados de entrega por status
+  const entregas = pedidos.filter(p => p.entrega).map(p => ({
+    id: p.id,
+    status: p.statusEntrega || "Postado"
+  }));
+
+  const statusEntregas = { Postado: 0, "Em transito": 0, "Saiu para entrega": 0, Entregue: 0 };
+
+  entregas.forEach(ent => {
+    const status = ent.status;
+    if (statusEntregas.hasOwnProperty(status)) statusEntregas[status]++;
+  });
+
+  const visaoEntregas = document.getElementById("visao-entregas");
+  for (const status in statusEntregas) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<h3>Entregas ${status}</h3><p>Total: <span class="highlight">${statusEntregas[status]}</span></p>`;
+    visaoEntregas.appendChild(card);
+  }
+
+  // Processa os dados de pagamentos por status
+  const pagamentos = pedidos.map(p => ({
+    id: p.id,
+    status: (p.status || "pendente").toLowerCase()
+  }));
+
+  const statusPagamentos = { aprovado: 0, pendente: 0, recusado: 0 };
+  pagamentos.forEach(pag => {
+    if (statusPagamentos.hasOwnProperty(pag.status)) statusPagamentos[pag.status]++;
+  });
+
+  const visaoPagamentos = document.getElementById("visao-pagamentos");
+  for (const status in statusPagamentos) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<h3>Pagamentos ${status}</h3><p>Total: <span class="highlight">${statusPagamentos[status]}</span></p>`;
+    visaoPagamentos.appendChild(card);
+  }
+
+  // Calcula os produtos mais vendidos
+  const quantidadeVendidaPorProduto = {};
+  pedidos.forEach(pedido => {
+    if (pedido.itens) {
+      pedido.itens.forEach(item => {
+        const nome = item.nome;
+        quantidadeVendidaPorProduto[nome] = (quantidadeVendidaPorProduto[nome] || 0) + item.quantidade;
+      });
+    }
+  });
+
+  // Exibe a tabela de mais vendidos
+  const maisVendidosEl = document.querySelector("#mais-vendidos tbody");
+  maisVendidosEl.innerHTML = "";
+
+  const produtosOrdenados = [...produtos]
+    .filter(p => quantidadeVendidaPorProduto[p.nome])
+    .sort((a, b) => quantidadeVendidaPorProduto[b.nome] - quantidadeVendidaPorProduto[a.nome]);
+
+  produtosOrdenados.forEach(produto => {
+    const vendido = quantidadeVendidaPorProduto[produto.nome] || 0;
+    const estoque = produto.estoque || 0;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${produto.nome}</td><td>${vendido}</td><td>${estoque}</td>`;
+    maisVendidosEl.appendChild(tr);
+  });
+</script>
+
+<!-- Rodapé da página -->
+<footer role="contentinfo">
+  <p>© 2025 WEAR. Todos os direitos reservados.</p>
+</footer>
+</body>
+</html>
