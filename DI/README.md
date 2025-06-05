@@ -67,7 +67,7 @@ Este é um sistema web desenvolvido para gerenciar vendas, produtos, pedidos, pa
 ---
 
 ### Link do projeto hospedado:
-https://di-weaar.netlify.app
+https://di-wear.netlify.app
 
 ---
 
