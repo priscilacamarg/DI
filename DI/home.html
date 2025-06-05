@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
@@ -6,13 +6,11 @@
   <title>Home - WEAR</title>
   <link rel="stylesheet" href="estilo.css" />
   <style>
-    /* Estilo de acessibilidade para foco de teclado */
     :focus {
       outline: 3px solid #005fcc;
       outline-offset: 2px;
     }
 
-    /* Classe para esconder elementos visualmente, mas manter acessível para leitores de tela */
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -24,7 +22,6 @@
       overflow: hidden;
     }
 
-    /* Estilo geral das seções */
     .section {
       margin-top: 40px;
       padding: 20px;
@@ -33,14 +30,12 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    /* Layout flexível para os cards */
     .stats {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
     }
 
-    /* Estilo de cada card */
     .card {
       flex: 1;
       min-width: 200px;
@@ -50,7 +45,6 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
-    /* Estilo do título e texto do card */
     .card h3 {
       margin: 0;
       font-size: 18px;
@@ -69,7 +63,6 @@
       color: #5a2600;
     }
 
-    /* Estilo da tabela */
     table {
       border-collapse: collapse;
       width: 100%;
@@ -89,10 +82,8 @@
 </head>
 <body>
 
-<!-- Link de pular para conteúdo principal (acessibilidade) -->
 <a href="#main-content" class="visually-hidden focusable">Pular para o conteúdo principal</a>
 
-<!-- Cabeçalho com logo e menu de navegação -->
 <header>
   <div class="header-container">
     <img src="/imagens/logo.png" alt="Logo WEAR" class="logo" />
@@ -107,30 +98,25 @@
   </div>
 </header>
 
-<!-- Conteúdo principal da página -->
 <main id="main-content" role="main">
   <div class="container">
     <h1>Visão Geral</h1>
 
-    <!-- Seção de vendas com cards por período -->
     <section class="section">
       <h2>Vendas</h2>
       <div class="stats" id="visao-geral"></div>
     </section>
 
-    <!-- Seção de entregas -->
     <section class="section">
       <h2>Entregas</h2>
       <div class="stats" id="visao-entregas"></div>
     </section>
 
-    <!-- Seção de pagamentos -->
     <section class="section">
       <h2>Pagamentos</h2>
       <div class="stats" id="visao-pagamentos"></div>
     </section>
 
-    <!-- Tabela com produtos mais vendidos -->
     <section class="section">
       <h2>Produtos Mais Vendidos</h2>
       <table id="mais-vendidos">
@@ -148,11 +134,9 @@
 </main>
 
 <script>
-  // Recupera os dados de pedidos e produtos do localStorage
   const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
   const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
 
-  // Formata valor em Real (BRL)
   function formatarValor(valor) {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -160,7 +144,6 @@
     }).format(valor);
   }
 
-  // Calcula as vendas separadas por período (dia, semana, mês, ano)
   function calcularVendasPorPeriodo(pedidos) {
     const hoje = new Date();
     const vendas = {
@@ -173,7 +156,7 @@
     pedidos.forEach(pedido => {
       const dataPedido = new Date(pedido.data);
       const diffDias = Math.floor((hoje - dataPedido) / (1000 * 60 * 60 * 24));
-      const valorPedido = pedido.valorTotal || 0;
+      const valorPedido = parseFloat(pedido.valorTotal) || 0; // <- CORRIGIDO AQUI
 
       if (diffDias === 0) {
         vendas.dia.qtd++;
@@ -196,7 +179,6 @@
     return vendas;
   }
 
-  // Exibe os cards de vendas
   const vendas = calcularVendasPorPeriodo(pedidos);
   const visao = document.getElementById("visao-geral");
   ['dia','semana','mes','ano'].forEach(periodo => {
@@ -211,7 +193,6 @@
     visao.appendChild(card);
   });
 
-  // Processa os dados de entrega por status
   const entregas = pedidos.filter(p => p.entrega).map(p => ({
     id: p.id,
     status: p.statusEntrega || "Postado"
@@ -232,7 +213,6 @@
     visaoEntregas.appendChild(card);
   }
 
-  // Processa os dados de pagamentos por status
   const pagamentos = pedidos.map(p => ({
     id: p.id,
     status: (p.status || "pendente").toLowerCase()
@@ -251,7 +231,6 @@
     visaoPagamentos.appendChild(card);
   }
 
-  // Calcula os produtos mais vendidos
   const quantidadeVendidaPorProduto = {};
   pedidos.forEach(pedido => {
     if (pedido.itens) {
@@ -262,7 +241,6 @@
     }
   });
 
-  // Exibe a tabela de mais vendidos
   const maisVendidosEl = document.querySelector("#mais-vendidos tbody");
   maisVendidosEl.innerHTML = "";
 
@@ -279,7 +257,6 @@
   });
 </script>
 
-<!-- Rodapé da página -->
 <footer role="contentinfo">
   <p>© 2025 WEAR. Todos os direitos reservados.</p>
 </footer>
