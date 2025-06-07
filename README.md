@@ -68,7 +68,14 @@ Este é um sistema web desenvolvido para gerenciar vendas, produtos, pedidos, pa
 ---
 
 ### Link do projeto hospedado:
+
 https://di-wear.netlify.app
+
+---
+
+## Link do video de explicação do projeto 
+
+https://youtu.be/vFzbvwm3Zzs
 
 ---
 
